@@ -9,5 +9,6 @@
 	<classpathentry kind="var" path="USERLIBS_DIR/TalonSRXLibJava.jar"/>
 	<classpathentry kind="lib" path="libs/Geometry-0.5.jar"/>
 	<classpathentry kind="lib" path="libs/Robot.Vision.API-0.5.jar"/>
+	<classpathentry kind="lib" path="libs/LibOfGongolierium.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
