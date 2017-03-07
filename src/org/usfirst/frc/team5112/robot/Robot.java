@@ -14,6 +14,7 @@ import com.kylecorry.frc.vision.TargetGroupDetector;
 import com.kylecorry.frc.vision.TargetSpecs;
 import com.thegongoliers.input.EnhancedXboxController;
 
+import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.CameraServer;
@@ -53,78 +54,85 @@ public class Robot extends IterativeRobot {
 		chooser2.addObject("Saturation", 1);
 		chooser2.addObject("Value", 2);
 		SmartDashboard.putData("HSV Chooser", chooser2);
+		UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+		camera.setResolution(160, 120);
+		camera.setBrightness(0);
+		camera.setExposureManual(0);
+		camera.setWhiteBalanceManual(10000);
 
 		xbox = new EnhancedXboxController(0);
 
-		new Thread(() -> {
+		Thread t = new Thread(() -> {
 
 			TargetSpecs specs = new PegRetroreflective();
 
 			double[][] hsv = { { specs.getHue().start, specs.getHue().end },
 					{ specs.getSaturation().start, specs.getSaturation().end },
 					{ specs.getValue().start, specs.getValue().end } };
-
-			UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
-			camera.setResolution(160, 120);
-			camera.setBrightness(0);
-			camera.setExposureManual(0);
-			camera.setWhiteBalanceManual(10000);
-
-			cam = new CameraSource(camera);
-			pegDetect = new TargetGroupDetector(new PegRetroreflective(), new Peg());
-
-			Mat output = new Mat();
-			Mat source = new Mat();
-			CvSource outputStream = CameraServer.getInstance().putVideo("Camera", 160, 120);
-
-			while (!Thread.interrupted()) {
-
-				if (xbox.getPOV() != -1) {
-					int selected = chooser2.getSelected();
-					switch (xbox.getPOVDirection()) {
-					case NORTH:
-						hsv[selected][0] += 5;
-						System.out.println(hsv[selected][0]);
-						break;
-					case SOUTH:
-						hsv[selected][0] -= 5;
-						System.out.println(hsv[selected][0]);
-						break;
-					case EAST:
-						hsv[selected][1] += 5;
-						System.out.println(hsv[selected][1]);
-						break;
-					case WEST:
-						hsv[selected][1] -= 5;
-						System.out.println(hsv[selected][1]);
-						break;
-					default:
-						System.out.println("North and south control start; east and west control end");
-					}
-				}
-
-				source = cam.getPicture();
-				String choice = chooser.getSelected();
-				if (choice.equals("threshold")) {
-					Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2HSV);
-					Core.inRange(output, new Scalar(hsv[0][0], hsv[1][0], hsv[2][0]),
-							new Scalar(hsv[0][1], hsv[1][1], hsv[2][1]), output);
-				} else if (choice.equals("target")) {
-					List<TargetGroup> targets = pegDetect.detect(cam.getPicture());
-					if (!targets.isEmpty()) {
-						output = source;
-						Rect boundary = new Rect((int) Math.round(targets.get(0).getPosition().x),
-								(int) Math.round(targets.get(0).getPosition().y),
-								(int) Math.round(targets.get(0).getWidth()),
-								(int) Math.round(targets.get(0).getHeight()));
-						Imgproc.rectangle(output, boundary.tl(), boundary.br(), new Scalar(0, 255, 0));
-					}
-				} else {
-					output = source;
-				}
-				outputStream.putFrame(output);
-			}
-		}).start();
+//
+//
+////			cam = new CameraSource(camera);
+//			pegDetect = new TargetGroupDetector(new PegRetroreflective(), new Peg());
+//
+//			Mat output = new Mat();
+//			Mat source = new Mat();
+//			CvSource outputStream = CameraServer.getInstance().putVideo("Camera", 160, 120);
+//			CvSink sink = new CvSink("cam0");
+//			sink.setSource(camera);
+//
+//			while (!Thread.interrupted()) {
+//				
+////				source = cam.getPicture();
+//				sink.grabFrame(source);
+//
+//
+//				if (xbox.getPOV() != -1) {
+//					int selected = chooser2.getSelected();
+//					switch (xbox.getPOVDirection()) {
+//					case NORTH:
+//						hsv[selected][0] += 5;
+//						System.out.println(hsv[selected][0]);
+//						break;
+//					case SOUTH:
+//						hsv[selected][0] -= 5;
+//						System.out.println(hsv[selected][0]);
+//						break;
+//					case EAST:
+//						hsv[selected][1] += 5;
+//						System.out.println(hsv[selected][1]);
+//						break;
+//					case WEST:
+//						hsv[selected][1] -= 5;
+//						System.out.println(hsv[selected][1]);
+//						break;
+//					default:
+//						System.out.println("North and south control start; east and west control end");
+//					}
+//				}
+//
+//				String choice = chooser.getSelected();
+//				if (choice.equals("threshold")) {
+//					Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2HSV);
+//					Core.inRange(output, new Scalar(hsv[0][0], hsv[1][0], hsv[2][0]),
+//							new Scalar(hsv[0][1], hsv[1][1], hsv[2][1]), output);
+//					outputStream.putFrame(output);
+//				} else if (choice.equals("target")) {
+//					List<TargetGroup> targets = pegDetect.detect(cam.getPicture());
+//					if (!targets.isEmpty()) {
+//						Rect boundary = new Rect((int) Math.round(targets.get(0).getPosition().x),
+//								(int) Math.round(targets.get(0).getPosition().y),
+//								(int) Math.round(targets.get(0).getWidth()),
+//								(int) Math.round(targets.get(0).getHeight()));
+//						Imgproc.rectangle(output, boundary.tl(), boundary.br(), new Scalar(0, 255, 0));
+//						outputStream.putFrame(output);
+//					}
+//				} else {
+//					outputStream.putFrame(source);
+//				}
+//			}
+		});
+		t.setDaemon(true);
+		t.start();
 
 	}
 

@@ -12,17 +12,17 @@ public class PegRetroreflective implements TargetSpecs{
 	
 	@Override
 	public Range getHue() {
-		return new Range(55, 140);
+		return new Range(140, 180);
 	}
 
 	@Override
 	public Range getSaturation() {
-		return new Range(190, 255);
+		return new Range(170, 255);
 	}
 
 	@Override
 	public Range getValue() {
-		return new Range(60, 200);
+		return new Range(70, 205);
 	}
 
 	@Override
