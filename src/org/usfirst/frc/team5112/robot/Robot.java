@@ -9,6 +9,7 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import com.kylecorry.frc.vision.CameraSource;
+import com.kylecorry.frc.vision.CameraSpecs;
 import com.kylecorry.frc.vision.TargetGroup;
 import com.kylecorry.frc.vision.TargetGroupDetector;
 import com.kylecorry.frc.vision.TargetSpecs;
@@ -72,64 +73,66 @@ public class Robot extends IterativeRobot {
 //
 //
 ////			cam = new CameraSource(camera);
-//			pegDetect = new TargetGroupDetector(new PegRetroreflective(), new Peg());
+			pegDetect = new TargetGroupDetector(new PegRetroreflective(), new Peg());
 //
-//			Mat output = new Mat();
-//			Mat source = new Mat();
-//			CvSource outputStream = CameraServer.getInstance().putVideo("Camera", 160, 120);
-//			CvSink sink = new CvSink("cam0");
-//			sink.setSource(camera);
+			Mat output = new Mat();
+			Mat source = new Mat();
+			CvSource outputStream = CameraServer.getInstance().putVideo("Camera", 160, 120);
+			CvSink sink = new CvSink("cam0");
+			sink.setSource(camera);
 //
-//			while (!Thread.interrupted()) {
+			while (!Thread.interrupted()) {
 //				
 ////				source = cam.getPicture();
-//				sink.grabFrame(source);
+				sink.grabFrame(source);
 //
 //
-//				if (xbox.getPOV() != -1) {
-//					int selected = chooser2.getSelected();
-//					switch (xbox.getPOVDirection()) {
-//					case NORTH:
-//						hsv[selected][0] += 5;
-//						System.out.println(hsv[selected][0]);
-//						break;
-//					case SOUTH:
-//						hsv[selected][0] -= 5;
-//						System.out.println(hsv[selected][0]);
-//						break;
-//					case EAST:
-//						hsv[selected][1] += 5;
-//						System.out.println(hsv[selected][1]);
-//						break;
-//					case WEST:
-//						hsv[selected][1] -= 5;
-//						System.out.println(hsv[selected][1]);
-//						break;
-//					default:
-//						System.out.println("North and south control start; east and west control end");
-//					}
+				if (xbox.getPOV() != -1) {
+					int selected = chooser2.getSelected();
+					switch (xbox.getPOVDirection()) {
+					case NORTH:
+						hsv[selected][0] += 5;
+						System.out.println(hsv[selected][0]);
+						break;
+					case SOUTH:
+						hsv[selected][0] -= 5;
+						System.out.println(hsv[selected][0]);
+						break;
+					case EAST:
+						hsv[selected][1] += 5;
+						System.out.println(hsv[selected][1]);
+						break;
+					case WEST:
+						hsv[selected][1] -= 5;
+						System.out.println(hsv[selected][1]);
+						break;
+					default:
+						System.out.println("North and south control start; east and west control end");
+					}
+				}
+//
+				String choice = chooser.getSelected();
+				if (choice.equals("threshold")) {
+					Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2HSV);
+					Core.inRange(output, new Scalar(hsv[0][0], hsv[1][0], hsv[2][0]),
+							new Scalar(hsv[0][1], hsv[1][1], hsv[2][1]), output);
+					outputStream.putFrame(output);
 //				}
-//
-//				String choice = chooser.getSelected();
-//				if (choice.equals("threshold")) {
-//					Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2HSV);
-//					Core.inRange(output, new Scalar(hsv[0][0], hsv[1][0], hsv[2][0]),
-//							new Scalar(hsv[0][1], hsv[1][1], hsv[2][1]), output);
-//					outputStream.putFrame(output);
-//				} else if (choice.equals("target")) {
-//					List<TargetGroup> targets = pegDetect.detect(cam.getPicture());
-//					if (!targets.isEmpty()) {
-//						Rect boundary = new Rect((int) Math.round(targets.get(0).getPosition().x),
-//								(int) Math.round(targets.get(0).getPosition().y),
-//								(int) Math.round(targets.get(0).getWidth()),
-//								(int) Math.round(targets.get(0).getHeight()));
-//						Imgproc.rectangle(output, boundary.tl(), boundary.br(), new Scalar(0, 255, 0));
-//						outputStream.putFrame(output);
-//					}
-//				} else {
-//					outputStream.putFrame(source);
-//				}
-//			}
+				} else if (choice.equals("target")) {
+					List<TargetGroup> targets = pegDetect.detect(source);
+					if (!targets.isEmpty()) {
+						Rect boundary = new Rect((int) Math.round(targets.get(0).getPosition().x),
+								(int) Math.round(targets.get(0).getPosition().y),
+								(int) Math.round(targets.get(0).getWidth()),
+								(int) Math.round(targets.get(0).getHeight()));
+						Imgproc.rectangle(source, boundary.tl(), boundary.br(), new Scalar(255, 0, 0));
+						outputStream.putFrame(source);
+						System.out.println(targets.get(0).computeAngle(160, CameraSpecs.MicrosoftLifeCam.HORIZONTAL_VIEW_ANGLE));
+					}
+				} else {
+					outputStream.putFrame(source);
+				}
+			}
 		});
 		t.setDaemon(true);
 		t.start();
